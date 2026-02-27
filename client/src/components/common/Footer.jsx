@@ -178,7 +178,7 @@ const Footer = () => {
                 {/* Developer Badge */}
                 <div className="flex flex-col items-center gap-2">
                     <span className="text-[10px] text-muted/60 font-mono tracking-wide">{t("footer.designedBy")}</span> {/* 🟢 */}
-                    <a href="https://www.linkedin.com/in/ali-haggag7" target="_blank" rel="noreferrer" className="bg-main/80 px-3 py-1.5 rounded-full border border-adaptive shadow-sm flex items-center gap-2 hover:border-primary/50 transition-all cursor-pointer group/dev">
+                    <a href="https://ali-haggag-portfolio.vercel.app/" target="_blank" rel="noreferrer" className="bg-main/80 px-3 py-1.5 rounded-full border border-adaptive shadow-sm flex items-center gap-2 hover:border-primary/50 transition-all cursor-pointer group/dev">
                         <span className="text-xs font-bold text-primary group-hover/dev:text-primary/80">Ali Haggag</span>
                         <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="text-primary">
                             <Heart size={10} fill="currentColor" />

@@ -27,11 +27,14 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'firebase-messaging-sw.js',
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
 
       injectManifest: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'], // Cache everything
+        templatedURLs: {
+          '/': 'index.html',
+        },
       },
 
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'favicon.svg'],

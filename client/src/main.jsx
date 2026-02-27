@@ -67,9 +67,12 @@ import './index.css';
 // --- PWA Service Worker Registration ---
 const updateSW = registerSW({
   onNeedRefresh() {
-    // eslint-disable-next-line no-restricted-globals
     if (confirm("New content available. Reload?")) {
-      updateSW(true);
+      if (updateSW && typeof updateSW === 'function') {
+        updateSW(true).then(() => {
+          window.location.reload();
+        });
+      }
     }
   },
   onOfflineReady() {
