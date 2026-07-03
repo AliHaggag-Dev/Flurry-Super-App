@@ -16,7 +16,7 @@ import {
     viewStory,
     handleStoriesEnd,
     toggleReaction,
-} from "../controllers/storyController.js";
+} from "../controllers/storyController/index.js";
 
 const storyRouter = express.Router();
 

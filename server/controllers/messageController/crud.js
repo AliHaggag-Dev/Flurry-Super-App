@@ -1,29 +1,11 @@
 import mongoose from "mongoose";
 import expressAsyncHandler from "express-async-handler";
-import imagekit from "../configs/imagekit.js";
-import Message from "../models/Message.js";
-import User from "../models/User.js";
-import { getReceiverSocketId, io } from "../socket/socket.js";
-import { sendPushNotification } from "../utils/sendNotification.js";
+import imagekit from "../../configs/imagekit.js";
+import Message from "../../models/Message.js";
+import User from "../../models/User.js";
+import { getReceiverSocketId, io } from "../../socket/socket.js";
+import { sendPushNotification } from "../../utils/sendNotification.js";
 
-/**
- * @file messageController.js
- * @description Production-grade controller for managing real-time chat, media handling, and SSE streams.
- * Optimized for performance with reusable population logic and strict validation.
- */
-
-// --- Constants & Config ---
-
-/**
- * Global SSE Connection Registry.
- * Note: In a clustered environment (Kubernetes/PM2), use Redis for session management.
- */
-export const connections = {};
-
-/**
- * Reusable Mongoose Populate Options.
- * Centralized to ensure consistency across endpoints and reduce code duplication.
- */
 const POPULATE_SENDER = {
     path: "sender",
     select: "full_name profile_picture clerkId username",
@@ -48,45 +30,12 @@ const POPULATE_REACTIONS = {
     select: "full_name username profile_picture",
 };
 
-// Combined populate array for full message details
-const FULL_MESSAGE_POPULATE = [
+export const FULL_MESSAGE_POPULATE = [
     POPULATE_SENDER,
     POPULATE_STORY,
     POPULATE_REPLY_TO,
     POPULATE_REACTIONS
 ];
-
-// --- Controllers ---
-
-/**
- * @desc Initialize Server-Sent Events (SSE) Stream
- * @route GET /api/message/stream/:userId
- * @access Public/Private
- */
-export const sseController = (req, res) => {
-    const { userId } = req.params;
-
-    // 1. Establish SSE Headers
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    // Security: Ensure CORS is handled at the middleware level or uncomment below
-    // res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
-
-    // 2. Register Active Connection
-    connections[userId] = res;
-
-    // 3. Send Heartbeat/Handshake
-    res.write(`data: ${JSON.stringify({ type: "connected" })}\n\n`);
-
-    // 4. Cleanup on Client Disconnect
-    req.on("close", () => {
-        if (connections[userId] === res) {
-            delete connections[userId];
-        }
-        console.log(`[SSE] Client ${userId} disconnected`);
-    });
-};
 
 /**
  * @desc Send a new message (Text, Image, Audio, or Shared Post)
@@ -197,17 +146,18 @@ export const sendMessage = expressAsyncHandler(async (req, res) => {
     newMessage = await newMessage.populate(FULL_MESSAGE_POPULATE);
 
     // 8. Real-time Emission (Socket.io)
-    if (receiverSocketId) {
-        io.to(receiverSocketId).emit("receiveMessage", newMessage);
+    const socketIoInstance = req.app.get("io") || io;
+    if (receiverSocketId && socketIoInstance) {
+        socketIoInstance.to(receiverSocketId).emit("receiveMessage", newMessage);
 
         // Notify sender of delivery
         const senderSocketId = getReceiverSocketId(senderMongoId.toString());
         if (senderSocketId) {
-            io.to(senderSocketId).emit("messageDelivered", { toUserId: finalReceiverId });
+            socketIoInstance.to(senderSocketId).emit("messageDelivered", { toUserId: finalReceiverId });
         }
     }
 
-    // 🔥🔥🔥 9. Push Notification Logic (New Addition) 🔥🔥🔥
+    // 🔥🔥🔥 9. Push Notification Logic 🔥🔥🔥
     try {
         let notificationBody = text;
         if (messageType === 'image') notificationBody = " Sent a photo 📷";
@@ -242,9 +192,8 @@ export const getChatMessages = expressAsyncHandler(async (req, res) => {
     const { userId: clerkId } = req.auth();
     const { withUserId } = req.params;
 
-    // 🟢 Pagination Parameters
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20; // Default 20 messages per chunk
+    const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
     // 1. Resolve Current User
@@ -262,14 +211,11 @@ export const getChatMessages = expressAsyncHandler(async (req, res) => {
         if (partner) {
             partnerId = partner._id;
         } else {
-            // Graceful fallback for invalid/non-existent users
             return res.status(200).json({ success: true, data: [], hasMore: false });
         }
     }
 
     // 3. Query Messages
-    // Logic: (Sender=Me & Receiver=Partner) OR (Sender=Partner & Receiver=Me) AND Not Deleted
-    // 🟢 Updated: Sort by -1 (Newest first) for pagination, then reverse back
     const messages = await Message.find({
         $and: [
             {
@@ -281,34 +227,30 @@ export const getChatMessages = expressAsyncHandler(async (req, res) => {
             { deletedBy: { $ne: myId } },
         ],
     })
-        .sort({ createdAt: -1 }) // 🟢 Fetch newest first
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate(FULL_MESSAGE_POPULATE)
-        .lean(); // Convert to plain JS objects for performance
+        .lean();
 
-    // 🟢 Re-order to chronological (Oldest -> Newest) for frontend display
     const sortedMessages = messages.reverse();
 
     // 4. Mark Messages as Read (Batch Update)
-    // We explicitly mark ALL unread messages from this partner as read, not just the fetched chunk
-    // to ensure notification badges clear correctly.
     await Message.updateMany(
         { sender: partnerId, receiver: myId, read: false },
         { $set: { read: true } }
     );
 
-    // Notify partner that I have seen their messages
-    // (We emit this regardless of whether we updated rows, to be safe/real-time)
     const partnerSocketId = getReceiverSocketId(partnerId.toString());
-    if (partnerSocketId) {
-        io.to(partnerSocketId).emit("messagesSeen", { byUserId: myId });
+    const socketIoInstance = req.app.get("io") || io;
+    if (partnerSocketId && socketIoInstance) {
+        socketIoInstance.to(partnerSocketId).emit("messagesSeen", { byUserId: myId });
     }
 
     res.status(200).json({
         success: true,
         data: sortedMessages,
-        hasMore: messages.length === limit // 🟢 Flag for frontend to know if more exist
+        hasMore: messages.length === limit
     });
 });
 
@@ -327,18 +269,14 @@ export const getRecentMessages = expressAsyncHandler(async (req, res) => {
     }
     const myId = user._id;
 
-    // Aggregation Pipeline for efficient grouping
     const conversations = await Message.aggregate([
-        // A. Filter relevant messages
         {
             $match: {
                 $or: [{ sender: myId }, { receiver: myId }],
                 deletedBy: { $ne: myId },
             },
         },
-        // B. Sort by newest first
         { $sort: { createdAt: -1 } },
-        // C. Group by "Conversation Partner"
         {
             $group: {
                 _id: {
@@ -365,7 +303,6 @@ export const getRecentMessages = expressAsyncHandler(async (req, res) => {
                 },
             },
         },
-        // D. Join with User collection
         {
             $lookup: {
                 from: "users",
@@ -374,7 +311,6 @@ export const getRecentMessages = expressAsyncHandler(async (req, res) => {
                 as: "partnerDetails",
             },
         },
-        // E. Flatten User Details
         {
             $project: {
                 lastMessage: 1,
@@ -382,7 +318,6 @@ export const getRecentMessages = expressAsyncHandler(async (req, res) => {
                 partnerRaw: { $arrayElemAt: ["$partnerDetails", 0] },
             },
         },
-        // F. Final Projection & Block Logic
         {
             $project: {
                 lastMessage: 1,
@@ -401,47 +336,10 @@ export const getRecentMessages = expressAsyncHandler(async (req, res) => {
                 },
             },
         },
-        // G. Final Sort (Most recent conversation top)
         { $sort: { "lastMessage.createdAt": -1 } },
     ]);
 
     res.status(200).json({ success: true, conversations });
-});
-
-/**
- * @desc Mark all messages from a sender as read
- * @route PUT /api/message/read/:senderId
- * @access Private
- */
-export const markMessagesAsRead = expressAsyncHandler(async (req, res) => {
-    const { senderId } = req.params;
-    const { userId: clerkId } = req.auth();
-
-    const user = await User.findOne({ clerkId });
-    const myId = user._id;
-
-    // Resolve Sender ID
-    let finalSenderId = senderId;
-    if (!mongoose.Types.ObjectId.isValid(senderId)) {
-        const senderUser = await User.findOne({ clerkId: senderId });
-        if (senderUser) finalSenderId = senderUser._id;
-    }
-
-    // Update DB
-    const result = await Message.updateMany(
-        { sender: finalSenderId, receiver: myId, read: false },
-        { $set: { read: true } }
-    );
-
-    // Real-time Notification
-    if (result.modifiedCount > 0) {
-        const senderSocketId = getReceiverSocketId(finalSenderId.toString());
-        if (senderSocketId) {
-            io.to(senderSocketId).emit("messagesSeen", { byUserId: myId });
-        }
-    }
-
-    res.status(200).json({ success: true, message: "Messages marked as read" });
 });
 
 /**
@@ -472,79 +370,6 @@ export const deleteConversation = expressAsyncHandler(async (req, res) => {
 });
 
 /**
- * @desc Toggle Message Reaction (Add/Remove/Update)
- * @route POST /api/message/react
- * @access Private
- */
-export const reactToMessage = expressAsyncHandler(async (req, res) => {
-    const { userId } = req.auth();
-    const { messageId, emoji } = req.body;
-
-    const currentUser = await User.findOne({ clerkId: userId });
-    if (!currentUser) {
-        res.status(404);
-        throw new Error("User not found");
-    }
-
-    // Find Message (Standard or Group)
-    let message = await Message.findById(messageId);
-    let isGroupMsg = false;
-
-    // Optional: Add GroupMessage support if schema exists
-    // if (!message) { message = await GroupMessage.findById(messageId); isGroupMsg = true; }
-
-    if (!message) {
-        res.status(404);
-        throw new Error("Message not found");
-    }
-
-    // Reaction Logic
-    const existingReactionIndex = message.reactions.findIndex(
-        (r) => r.user.toString() === currentUser._id.toString()
-    );
-
-    if (existingReactionIndex > -1) {
-        // Toggle: Remove if same emoji, Update if different
-        if (message.reactions[existingReactionIndex].emoji === emoji) {
-            message.reactions.splice(existingReactionIndex, 1);
-        } else {
-            message.reactions[existingReactionIndex].emoji = emoji;
-        }
-    } else {
-        // Add new reaction
-        message.reactions.push({ user: currentUser._id, emoji });
-    }
-
-    await message.save();
-
-    // Populate for frontend display
-    const populatedMessage = await message.populate({
-        path: "reactions.user",
-        select: "full_name username profile_picture",
-    });
-
-    // Broadcast Update
-    const socketPayload = {
-        messageId,
-        reactions: populatedMessage.reactions,
-    };
-
-    const ioInstance = req.app.get("io") || io;
-
-    if (isGroupMsg) {
-        ioInstance.to(message.group.toString()).emit("messageReaction", socketPayload);
-    } else {
-        const receiverSocket = getReceiverSocketId(message.receiver.toString());
-        const senderSocket = getReceiverSocketId(message.sender.toString());
-
-        if (receiverSocket) ioInstance.to(receiverSocket).emit("messageReaction", socketPayload);
-        if (senderSocket) ioInstance.to(senderSocket).emit("messageReaction", socketPayload);
-    }
-
-    res.status(200).json({ success: true, reactions: message.reactions });
-});
-
-/**
  * @desc    Delete a specific message (Soft Delete)
  * @route   DELETE /api/message/:id
  * @access  Private
@@ -554,52 +379,43 @@ export const deleteMessage = expressAsyncHandler(async (req, res) => {
     const { userId: clerkId } = req.auth();
 
     try {
-        // 1. Check User
         const user = await User.findOne({ clerkId });
         if (!user) {
             res.status(404);
             throw new Error("User not found");
         }
 
-        // 2. Find Message
         const message = await Message.findById(messageId);
         if (!message) {
             res.status(404);
             throw new Error("Message not found");
         }
 
-        // 3. Ownership Check
         if (message.sender.toString() !== user._id.toString()) {
             res.status(401);
             throw new Error("Not authorized to delete this message");
         }
 
-        // 4. Soft Delete (Update DB)
         message.text = "";
         message.media_url = null;
         message.isDeleted = true;
 
-        await message.save(); // 💾 Save changes to Database
+        await message.save();
 
-        // 5. Socket Notification (Isolated Block)
         try {
             if (message.receiver) {
-                // Check if functions are imported correctly
-                if (typeof getReceiverSocketId === 'function' && typeof io !== 'undefined') {
+                const socketIoInstance = req.app.get("io") || io;
+                if (typeof getReceiverSocketId === 'function' && socketIoInstance) {
                     const receiverSocketId = getReceiverSocketId(message.receiver.toString());
                     if (receiverSocketId) {
-                        io.to(receiverSocketId).emit("messageDeleted", { messageId });
+                        socketIoInstance.to(receiverSocketId).emit("messageDeleted", { messageId });
                     }
-                } else {
-                    console.warn("⚠️ Socket.io is not initialized properly in deleteMessage controller.");
                 }
             }
         } catch (socketError) {
-            // Log error internally but don't fail the request
             console.error("⚠️ Socket Notification Failed:", socketError.message);
         }
 
-        // 6. Send Success Response
         res.status(200).json({ success: true, message: "Message deleted successfully" });
 
     } catch (error) {
@@ -623,21 +439,18 @@ export const editMessage = expressAsyncHandler(async (req, res) => {
         throw new Error("Text content is required for editing");
     }
 
-    // 1. Find User
     const user = await User.findOne({ clerkId });
     if (!user) {
         res.status(404);
         throw new Error("User not found");
     }
 
-    // 2. Find Message
     const message = await Message.findById(messageId);
     if (!message) {
         res.status(404);
         throw new Error("Message not found");
     }
 
-    // 3. Check Ownership & Restrictions
     if (message.sender.toString() !== user._id.toString()) {
         res.status(401);
         throw new Error("Not authorized to edit this message");
@@ -648,15 +461,14 @@ export const editMessage = expressAsyncHandler(async (req, res) => {
         throw new Error("Cannot edit a deleted message");
     }
 
-    // 4. Update Message
     message.text = text;
-    message.isEdited = true; // Add this field to schema if needed for UI tag
+    message.isEdited = true;
     await message.save();
 
-    // 5. Real-time Notification
     const receiverSocketId = getReceiverSocketId(message.receiver.toString());
-    if (receiverSocketId) {
-        io.to(receiverSocketId).emit("messageUpdated", {
+    const socketIoInstance = req.app.get("io") || io;
+    if (receiverSocketId && socketIoInstance) {
+        socketIoInstance.to(receiverSocketId).emit("messageUpdated", {
             messageId,
             newText: text,
             isEdited: true

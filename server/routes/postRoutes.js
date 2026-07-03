@@ -17,7 +17,7 @@ import {
     updateComment,
     deleteComment,
     toggleCommentLike
-} from '../controllers/postController.js';
+} from '../controllers/postController/index.js';
 
 const postRouter = express.Router();
 

@@ -20,7 +20,7 @@ import {
     editGroupMessage,
     createPoll,
     votePoll
-} from '../controllers/groupController.js';
+} from '../controllers/groupController/index.js';
 
 const groupRouter = express.Router();
 

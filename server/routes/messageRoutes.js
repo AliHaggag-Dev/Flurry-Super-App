@@ -23,7 +23,7 @@ import {
     reactToMessage,
     deleteMessage,
     editMessage
-} from "../controllers/messageController.js";
+} from "../controllers/messageController/index.js";
 
 const messageRouter = express.Router();
 

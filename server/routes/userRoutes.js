@@ -17,7 +17,7 @@ import {
     updatePrivacySettings,
     updateNotificationSettings,
     saveFcmToken
-} from "../controllers/userController.js";
+} from "../controllers/userController/index.js";
 
 const userRouter = express.Router();
 

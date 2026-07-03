@@ -1,59 +1,7 @@
-/**
- * @file connectionController.js
- * @description Controller for managing user relationships: requests, connections, blocks, and unfriending.
- * Integrates real-time Socket.io events and automated email notifications.
- * @module Controllers/Connection
- */
-
-import mongoose from "mongoose";
 import expressAsyncHandler from "express-async-handler";
-import Connection from "../models/Connection.js";
-import User from "../models/User.js";
-import Notification from "../models/Notification.js";
-import sendEmail from "../utils/sendEmail.js";
-import { io, getReceiverSocketId } from "../socket/socket.js";
-
-// --- Internal Helpers (Decomposition) ---
-
-/**
- * Helper to emit socket notifications safely
- */
-const emitSocketNotification = (receiverId, event, data) => {
-    const socketId = getReceiverSocketId(receiverId);
-    if (socketId) {
-        io.to(socketId).emit(event, data);
-        console.log(`📡 Socket event [${event}] sent to UID: ${receiverId}`);
-    }
-};
-
-/**
- * Helper to handle connection emails
- */
-const sendConnectionEmail = async (receiver, sender, type) => {
-    if (!receiver.notificationSettings?.email) return;
-
-    try {
-        const profileUrl = `${process.env.CLIENT_URL}/profile/${sender.username}`;
-        const subjects = {
-            request: `New Connection Request from ${sender.full_name} 👥`,
-            accept: `Connection Accepted: You are now connected with ${sender.full_name}! 🎉`
-        };
-
-        const htmlContent = type === 'request'
-            ? `<h2>Hello ${receiver.full_name.split(" ")[0]}!</h2><p><strong>${sender.full_name}</strong> wants to connect with you on Flurry.</p><a href="${profileUrl}">View Profile</a>`
-            : `<h2>Good News! 🥳</h2><p><strong>${sender.full_name}</strong> accepted your connection request.</p><a href="${profileUrl}">Visit Profile</a>`;
-
-        sendEmail({
-            to: receiver.email,
-            subject: subjects[type],
-            html: `<div style="font-family: Arial, sans-serif; padding: 20px;">${htmlContent}</div>`
-        });
-    } catch (error) {
-        console.error("📧 Email dispatch failed:", error);
-    }
-};
-
-// --- Controllers ---
+import User from "../../models/User.js";
+import Notification from "../../models/Notification.js";
+import { emitSocketNotification, sendConnectionEmail } from "./helpers.js";
 
 /**
  * @desc Send Connection Request
@@ -77,13 +25,11 @@ export const sendConnectionRequest = expressAsyncHandler(async (req, res) => {
     if (sender.connections.includes(receiver._id)) throw new Error("You are already connected");
     if (sender.sentRequests.includes(receiver._id)) throw new Error("Request already sent");
 
-    // Atomic Updates for data integrity
     await Promise.all([
         User.findByIdAndUpdate(sender._id, { $addToSet: { sentRequests: receiver._id } }),
         User.findByIdAndUpdate(receiver._id, { $addToSet: { pendingRequests: sender._id } })
     ]);
 
-    // Create persistent notification
     const notification = await Notification.create({
         recipient: receiver._id,
         sender: sender._id,
@@ -91,7 +37,6 @@ export const sendConnectionRequest = expressAsyncHandler(async (req, res) => {
         status: "pending"
     });
 
-    // Real-time Feedback
     emitSocketNotification(receiverId, "newNotification", {
         _id: notification._id,
         type: "connection_request",
@@ -104,7 +49,6 @@ export const sendConnectionRequest = expressAsyncHandler(async (req, res) => {
         message: "New connection request"
     });
 
-    // Background Email Task
     sendConnectionEmail(receiver, sender, 'request');
 
     res.status(200).json({ success: true, message: "Connection request sent" });
@@ -124,7 +68,6 @@ export const removeConnection = expressAsyncHandler(async (req, res) => {
 
     if (!currentUser || !targetUser) throw new Error("User not found");
 
-    // Execute pulls concurrently for performance
     await Promise.all([
         User.findByIdAndUpdate(currentUser._id, { $pull: { connections: targetUser._id } }),
         User.findByIdAndUpdate(targetUser._id, { $pull: { connections: currentUser._id } })
@@ -136,41 +79,6 @@ export const removeConnection = expressAsyncHandler(async (req, res) => {
     });
 
     res.status(200).json({ success: true, message: "Connection removed successfully" });
-});
-
-/**
- * @desc Get User Connections & Requests
- * @route /api/connection
- * @method GET
- */
-export const getUserConnections = expressAsyncHandler(async (req, res) => {
-    const { userId } = req.auth();
-    const publicFields = "full_name username profile_picture bio";
-
-    const user = await User.findOne({ clerkId: userId })
-        .populate("connections", publicFields)
-        .populate("pendingRequests", publicFields)
-        .populate("sentRequests", publicFields)
-        .populate("followers", publicFields)
-        .populate("following", publicFields)
-        .populate("blockedUsers", publicFields);
-
-    if (!user) {
-        res.status(404);
-        throw new Error("User not found");
-    }
-
-    res.status(200).json({
-        success: true,
-        data: {
-            connections: user.connections || [],
-            pendingRequests: user.pendingRequests || [],
-            sentRequests: user.sentRequests || [],
-            followers: user.followers || [],
-            following: user.following || [],
-            blockedUsers: user.blockedUsers || []
-        }
-    });
 });
 
 /**
@@ -187,7 +95,6 @@ export const acceptConnection = expressAsyncHandler(async (req, res) => {
 
     if (!me || !sender) throw new Error("User not found");
 
-    // Atomic acceptance logic: Add to social sets and pull from pending/sent
     await Promise.all([
         User.findByIdAndUpdate(me._id, {
             $addToSet: { connections: sender._id, followers: sender._id, following: sender._id },
@@ -199,13 +106,11 @@ export const acceptConnection = expressAsyncHandler(async (req, res) => {
         })
     ]);
 
-    // Update historical notification status
     await Notification.findOneAndUpdate(
         { recipient: me._id, sender: sender._id, type: "connection_request" },
         { status: "accepted" }
     );
 
-    // Create success notification for the requester
     const newNotification = await Notification.create({
         recipient: sender._id,
         sender: me._id,
@@ -244,7 +149,6 @@ export const rejectConnectionRequest = expressAsyncHandler(async (req, res) => {
 
     if (!currentUser || !targetUser) throw new Error("User not found");
 
-    // Concurrent clean-up of all possible request states
     await Promise.all([
         User.findByIdAndUpdate(currentUser._id, {
             $pull: { pendingRequests: targetUser._id, sentRequests: targetUser._id, followRequests: targetUser._id }
@@ -265,61 +169,4 @@ export const rejectConnectionRequest = expressAsyncHandler(async (req, res) => {
     ]);
 
     res.status(200).json({ success: true, message: "Request removed/rejected successfully" });
-});
-
-/**
- * @desc Block User
- * @route /api/connection/block/:id
- * @method POST
- */
-export const blockUser = expressAsyncHandler(async (req, res) => {
-    const { userId: clerkId } = req.auth();
-    const { id: targetUserId } = req.params;
-
-    const currentUser = await User.findOne({ clerkId });
-    if (!currentUser) throw new Error("User not found");
-
-    const currentUserId = currentUser._id;
-    if (currentUserId.toString() === targetUserId) {
-        res.status(400);
-        throw new Error("You cannot block yourself.");
-    }
-
-    // Comprehensive relationship termination
-    await Promise.all([
-        User.findByIdAndUpdate(currentUserId, {
-            $addToSet: { blockedUsers: targetUserId },
-            $pull: { following: targetUserId, followers: targetUserId, connections: targetUserId }
-        }),
-        User.findByIdAndUpdate(targetUserId, {
-            $pull: { following: currentUserId, followers: currentUserId, connections: currentUserId }
-        }),
-        Connection.findOneAndDelete({
-            $or: [
-                { sender: currentUserId, receiver: targetUserId },
-                { sender: targetUserId, receiver: currentUserId }
-            ]
-        })
-    ]);
-
-    res.status(200).json({ success: true, message: "User blocked successfully" });
-});
-
-/**
- * @desc Unblock User
- * @route /api/connection/unblock/:id
- * @method POST
- */
-export const unblockUser = expressAsyncHandler(async (req, res) => {
-    const { userId } = req.auth();
-    const { id: targetUserId } = req.params;
-
-    const currentUser = await User.findOne({ clerkId: userId });
-    if (!currentUser) throw new Error("User not found");
-
-    await User.findByIdAndUpdate(currentUser._id, {
-        $pull: { blockedUsers: targetUserId }
-    });
-
-    res.status(200).json({ success: true, message: "User unblocked successfully" });
 });

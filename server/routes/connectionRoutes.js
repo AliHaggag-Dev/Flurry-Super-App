@@ -12,12 +12,12 @@ import {
     blockUser,
     unblockUser,
     removeConnection,
-} from "../controllers/connectionController.js";
+} from "../controllers/connectionController/index.js";
 
 import {
     followUser,
     unfollowUser,
-} from "../controllers/userController.js";
+} from "../controllers/userController/index.js";
 
 /**
  * Connection Router
