@@ -1,19 +1,11 @@
-/**
- * StoryPlayer Component
- * ------------------------------------------------------------------
- * Full-screen story viewer with playback controls, progress bars,
- * reply functionality, and viewer insights.
- * Optimized to isolate typing re-renders from media playback.
- */
-
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatDistanceToNowStrict } from "date-fns";
-import { useTranslation } from "react-i18next"; // 🟢 Import translation hook
-import { ar, enUS } from "date-fns/locale"; // 🟢 Import locales
+import { useTranslation } from "react-i18next";
+import { ar, enUS } from "date-fns/locale";
 
 // Icons
 import {
@@ -22,7 +14,11 @@ import {
 } from "lucide-react";
 
 // API
-import api from "../../lib/axios";
+import api from "../../../lib/axios";
+
+// Sub-Components
+import StoryMedia from "./StoryMedia";
+import ViewersListModal from "./ViewersListModal";
 
 // Constants
 const REACTION_EMOJIS = [
@@ -34,126 +30,6 @@ const REACTION_EMOJIS = [
 ];
 
 const IMAGE_DURATION = 5000;
-
-// --- Sub-Components (Memoized) ---
-
-// 1. Media Component (Video/Image) - Prevents re-render while typing
-const StoryMedia = memo(({ activeStory, isVideo, isMuted, videoRef, onVideoEnd, fileUrl }) => {
-    return (
-        <div className="w-full h-full relative flex items-center justify-center bg-[#111]">
-            {activeStory.type === "text" ? (
-                <div
-                    className="w-full h-full flex items-center justify-center p-8 text-center"
-                    style={{ background: activeStory.background || activeStory.background_color || '#000' }}
-                >
-                    <p className="text-white text-2xl font-bold whitespace-pre-wrap">{activeStory.content}</p>
-                </div>
-            ) : (
-                <>
-                    {/* Background Blur */}
-                    <div className="absolute inset-0 w-full h-full z-0 overflow-hidden opacity-50 blur-3xl scale-125">
-                        {isVideo ? (
-                            <video src={fileUrl} className="w-full h-full object-cover" muted />
-                        ) : (
-                            <img src={fileUrl} className="w-full h-full object-cover" alt="blur-bg" />
-                        )}
-                    </div>
-                    {/* Main Media */}
-                    <div className="relative z-10 w-full h-full flex items-center justify-center">
-                        {isVideo ? (
-                            <video
-                                ref={videoRef}
-                                src={fileUrl}
-                                muted={isMuted}
-                                playsInline
-                                className="max-w-full max-h-full object-contain pointer-events-none"
-                                onEnded={onVideoEnd}
-                            />
-                        ) : (
-                            <img
-                                src={fileUrl}
-                                alt="Story"
-                                className="max-w-full max-h-full object-contain pointer-events-none"
-                            />
-                        )}
-                    </div>
-                </>
-            )}
-        </div>
-    );
-});
-
-// 2. Viewers Modal - Separated for cleaner code
-const ViewersListModal = memo(({ show, onClose, viewers, currentUser, t, currentLocale }) => { // 🟢 Receive t & locale
-    if (!show) return null;
-
-    // Filter Logic
-    const filteredViewers = viewers?.filter(v => v.user?.username !== currentUser.username) || [];
-
-    return (
-        <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute inset-0 z-100 bg-black/60 backdrop-blur-sm flex items-end justify-center pointer-events-auto"
-            onClick={(e) => { e.stopPropagation(); onClose(); }}
-        >
-            <motion.div
-                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="w-full max-w-md h-[60vh] bg-[#1a1a1a] rounded-t-3xl border-t border-white/10 overflow-hidden flex flex-col shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#1a1a1a]">
-                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                        <Eye size={20} className="text-blue-500" />
-                        {t("stories.player.storyViews")} ({viewers?.length || 0}) {/* 🟢 */}
-                    </h3>
-                    <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-white transition">
-                        <X size={18} />
-                    </button>
-                </div>
-
-                {/* List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-[#1a1a1a]">
-                    {filteredViewers.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-white/30 gap-2">
-                            <Eye size={40} />
-                            <p>{t("stories.player.noViews")}</p> {/* 🟢 */}
-                        </div>
-                    ) : (
-                        filteredViewers.map((viewRecord) => {
-                            const viewerData = viewRecord.user;
-                            if (!viewerData) return null;
-                            return (
-                                <div key={viewerData._id} className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition group">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <img src={viewerData?.profile_picture || "/avatar-placeholder.png"} className="w-10 h-10 rounded-full object-cover border border-white/10" alt="v" />
-                                            {viewRecord.reaction && (
-                                                <span className="absolute -bottom-1 -end-1 text-sm bg-[#1a1a1a] rounded-full p-0.5 border border-white/10">
-                                                    {viewRecord.reaction}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <p className="text-white font-medium text-sm flex items-center gap-2 text-start">{viewerData?.full_name}</p> {/* 🔵 text-start */}
-                                            <p className="text-white/40 text-xs text-start">@{viewerData?.username}</p> {/* 🔵 text-start */}
-                                        </div>
-                                    </div>
-                                    <span className="text-white/30 text-xs font-medium">
-                                        {formatDistanceToNowStrict(new Date(viewRecord.viewedAt), { addSuffix: true, locale: currentLocale })} {/* 🟢 Localized time */}
-                                    </span>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-});
-
-// --- Main Component ---
 
 const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
     // --- State ---
@@ -175,14 +51,14 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
     const { getToken } = useAuth();
     const { user } = useUser();
     const navigate = useNavigate();
-    const { t, i18n } = useTranslation(); // 🟢 Hook initialization
+    const { t, i18n } = useTranslation();
 
     // --- Derived Values ---
     const activeStory = viewStory?.stories[currentIndex];
     const isVideo = activeStory?.type === 'video' || (activeStory?.type === 'media' && activeStory?.mediaUrl?.endsWith(".mp4"));
     const isMyStory = user?.username === viewStory.user.username || user?.fullName === viewStory.user.full_name;
     const fileUrl = activeStory?.image || activeStory?.mediaUrl;
-    const currentLocale = i18n.language === 'ar' ? ar : enUS; // 🟢 Select locale
+    const currentLocale = i18n.language === 'ar' ? ar : enUS;
 
     // --- 1. Mark as Viewed Logic ---
     useEffect(() => {
@@ -275,13 +151,13 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
     const handleDeleteStory = async (e) => {
         e.stopPropagation();
         setIsPaused(true);
-        if (!window.confirm(t("stories.player.deleteConfirm"))) { setIsPaused(false); return; } // 🟢
+        if (!window.confirm(t("stories.player.deleteConfirm"))) { setIsPaused(false); return; }
         try {
             const token = await getToken();
             await api.delete(`/story/${activeStory._id}`, { headers: { Authorization: `Bearer ${token}` } });
-            toast.success(t("stories.player.deletedSuccess")); // 🟢
+            toast.success(t("stories.player.deletedSuccess"));
             handleClose();
-        } catch { toast.error(t("stories.player.deleteError")); setIsPaused(false); } // 🟢
+        } catch { toast.error(t("stories.player.deleteError")); setIsPaused(false); }
     };
 
     const handleReaction = async (emoji) => {
@@ -315,13 +191,13 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            toast.success(t("stories.player.replySuccess")); // 🟢
+            toast.success(t("stories.player.replySuccess"));
             setReplyText("");
             if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
             setIsPaused(false);
         } catch (error) {
             console.error("Failed to send reply", error);
-            toast.error(t("stories.player.replyError")); // 🟢
+            toast.error(t("stories.player.replyError"));
             setIsPaused(true);
         } finally {
             setIsSendingReply(false);
@@ -362,7 +238,7 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
                                 {viewStory.user?.isVerified && <BadgeCheck size={14} className="text-primary" />}
                             </p>
                             <p className="text-white/60 text-[10px]">
-                                {formatDistanceToNowStrict(new Date(activeStory.createdAt), { addSuffix: true, locale: currentLocale })} {/* 🟢 Time Ago */}
+                                {formatDistanceToNowStrict(new Date(activeStory.createdAt), { addSuffix: true, locale: currentLocale })}
                             </p>
                         </div>
                     </div>
@@ -426,7 +302,7 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
                                 <Eye size={18} className="text-white" />
                                 <span className="text-white font-bold text-sm">{activeStory.viewers?.length || 0}</span>
                             </div>
-                            <span className="text-[10px] text-white/60">{t("stories.player.views")}</span> {/* 🟢 */}
+                            <span className="text-[10px] text-white/60">{t("stories.player.views")}</span>
                         </div>
                     )}
 
@@ -451,7 +327,7 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
                             >
                                 <input
                                     type="text"
-                                    placeholder={t("stories.player.replyPlaceholder")} // 🟢
+                                    placeholder={t("stories.player.replyPlaceholder")}
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
                                     className="flex-1 bg-transparent border border-white/30 rounded-full px-4 py-3 text-white placeholder-white/50 text-sm focus:outline-none focus:border-white focus:bg-white/5 transition backdrop-blur-md"
@@ -466,7 +342,7 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
                                         onClick={(e) => e.stopPropagation()}
                                         className="p-3 bg-white text-black rounded-full hover:scale-105 transition active:scale-95 disabled:opacity-50"
                                     >
-                                        {isSendingReply ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="rtl:rotate-180" />} {/* 🟢 RTL Icon */}
+                                        {isSendingReply ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="rtl:rotate-180" />}
                                     </button>
                                 )}
                             </form>
@@ -496,8 +372,8 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
                             animate={{ opacity: 0, y: -400, scale: 1.5 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 1.5, ease: "easeOut" }}
-                            className="absolute bottom-20 end-10 text-5xl pointer-events-none z-60" // 🔵 right -> end-10
-                            style={{ left: `${r.x}%` }} // Keeps random X position logic
+                            className="absolute bottom-20 end-10 text-5xl pointer-events-none z-60"
+                            style={{ left: `${r.x}%` }}
                         >
                             {r.char}
                         </motion.div>
@@ -510,8 +386,8 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
                         onClose={() => { setShowViewers(false); setIsPaused(false); }}
                         viewers={activeStory.viewers}
                         currentUser={user}
-                        t={t} // 🟢 Pass t function
-                        currentLocale={currentLocale} // 🟢 Pass locale
+                        t={t}
+                        currentLocale={currentLocale}
                     />
                 </AnimatePresence>
             </div>
@@ -519,4 +395,4 @@ const StoryPlayer = ({ viewStory, setViewStory, onClose }) => {
     );
 };
 
-export default StoryPlayer;
+export default memo(StoryPlayer);

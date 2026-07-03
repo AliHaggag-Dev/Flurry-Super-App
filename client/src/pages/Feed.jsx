@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next"; // 🟢
 import StoriesBar from "../components/story/StoriesBar";
 import PostCard from "../components/feed/PostCard";
 import PostSkeleton from "../components/skeletons/PostSkeleton";
-import RecentMessages from "../components/chat/ResentMessages";
+import RecentMessages from "../components/chat/RecentMessages";
 import Footer from "../components/common/Footer";
 
 // --- Libs/Utils ---
