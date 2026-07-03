@@ -3,6 +3,7 @@ import { useLocation, Outlet } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 // --- Local Imports ---
 import { syncUser } from "../features/userSlice";
@@ -27,6 +28,7 @@ const AuthWrapper = () => {
     const { user, isLoaded } = useUser();
     const { getToken } = useAuth();
     const { socket } = useSocketContext();
+    const { t } = useTranslation();
 
     // --- Refs & State ---
     // Using ref to access current path inside socket callbacks without re-binding listeners
@@ -90,7 +92,7 @@ const AuthWrapper = () => {
                 dispatch(addRealtimeMessage(newMessage));
             } else {
                 // If on another page, show a notification
-                toast.success(`New message from ${newMessage.sender.full_name}`, {
+                toast.success(t("chat.toasts.newMessage", { name: newMessage.sender.full_name }), {
                     icon: "💬",
                     duration: 4000,
                     className: "bg-surface text-content border border-adaptive",

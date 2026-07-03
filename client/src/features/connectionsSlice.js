@@ -8,6 +8,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../lib/axios";
 import toast from "react-hot-toast";
+import i18n from "../i18n";
 
 // --- Initial State ---
 
@@ -150,7 +151,7 @@ export const unfollowUserAction = createAsyncThunk(
             });
             return targetUserId;
         } catch (error) {
-            toast.error("Failed to unfollow");
+            toast.error(i18n.t("connections.toasts.failedToUnfollow"));
             return rejectWithValue(error.response?.data?.message);
         }
     }

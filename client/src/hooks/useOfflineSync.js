@@ -1,15 +1,17 @@
 import { useEffect } from 'react';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 const useOfflineSync = () => {
+    const { t } = useTranslation();
 
     const processQueue = async () => {
         const queue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
         if (queue.length === 0) return;
         if (!navigator.onLine) return;
 
-        const toastId = toast.loading("جاري مزامنة الرسائل المعلقة...");
+        const toastId = toast.loading(t("chat.toasts.syncing"));
         const newQueue = [];
 
         for (const msg of queue) {
@@ -29,7 +31,7 @@ const useOfflineSync = () => {
         localStorage.setItem('offlineQueue', JSON.stringify(newQueue));
 
         if (newQueue.length < queue.length) {
-            toast.success("تم المزامنة", { id: toastId });
+            toast.success(t("chat.toasts.synced"), { id: toastId });
 
             window.dispatchEvent(new Event("messages-synced"));
         } else {

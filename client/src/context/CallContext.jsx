@@ -13,6 +13,7 @@ import React, { createContext, useState, useRef, useEffect, useContext, useCallb
 import SimplePeer from 'simple-peer';
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 // Context & Hooks
 import { useSocketContext } from './SocketContext';
@@ -24,6 +25,7 @@ export const useCall = () => useContext(CallContext);
 export const CallProvider = ({ children }) => {
     const { socket } = useSocketContext();
     const { userId } = useAuth();
+    const { t } = useTranslation();
 
     // --- State Management ---
     const [call, setCall] = useState({});
@@ -93,7 +95,7 @@ export const CallProvider = ({ children }) => {
 
         const handleCallEnded = () => {
             endCallCleanup();
-            toast.success("Call ended");
+            toast.success(t("call.toasts.ended"));
         };
 
         socket.on('callUser', handleIncomingCall);
@@ -122,7 +124,7 @@ export const CallProvider = ({ children }) => {
             return currentStream;
         } catch (error) {
             console.error("Failed to get stream:", error);
-            toast.error("Camera/Mic permission denied");
+            toast.error(t("call.toasts.micCameraDenied"));
             return null;
         }
     }, []);
@@ -134,7 +136,7 @@ export const CallProvider = ({ children }) => {
             videoTrack.enabled = !isVideoEnabled;
             setIsVideoEnabled((prev) => !prev);
         } else {
-            toast.error("No video track found");
+            toast.error(t("call.toasts.noVideoTrack"));
         }
     }, [stream, isVideoEnabled]);
 
@@ -145,7 +147,7 @@ export const CallProvider = ({ children }) => {
             audioTrack.enabled = !isAudioEnabled;
             setIsAudioEnabled((prev) => !prev);
         } else {
-            toast.error("No audio track found");
+            toast.error(t("call.toasts.noAudioTrack"));
         }
     }, [stream, isAudioEnabled]);
 
@@ -185,7 +187,7 @@ export const CallProvider = ({ children }) => {
 
         peer.on('error', (err) => {
             console.error("Peer Error:", err);
-            toast.error("Connection failed");
+            toast.error(t("call.toasts.connectionFailed"));
             endCallCleanup();
         });
 
@@ -216,7 +218,7 @@ export const CallProvider = ({ children }) => {
 
         peer.on('error', (err) => {
             console.error("Peer Error:", err);
-            toast.error("Connection failed");
+            toast.error(t("call.toasts.connectionFailed"));
             endCallCleanup();
         });
 

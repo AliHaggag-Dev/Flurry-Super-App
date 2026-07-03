@@ -125,7 +125,7 @@ const PostCard = ({ post: initialPost, onDelete, priority, onReport }) => {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } catch (err) {
-                if (err.name !== "AbortError") toast.error("Sharing failed");
+                if (err.name !== "AbortError") toast.error(t("post.toasts.sharingFailed"));
             }
         } else {
             handleCopyLink(e);

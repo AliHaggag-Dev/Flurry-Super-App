@@ -142,7 +142,17 @@
         "reported": "Reported",
         "share": "Share",
         "sendInApp": "Send in App",
-        "shareVia": "Share via..."
+        "shareVia": "Share via...",
+        "toasts": {
+            "saved": "Post Saved 💾",
+            "unsaved": "Removed from Saved",
+            "saveError": "Failed to save post",
+            "deleteConfirm": "Are you sure you want to delete this post?",
+            "deleteSuccess": "Post deleted successfully",
+            "deleteError": "Failed to delete post",
+            "sharingFailed": "Sharing failed",
+            "reported": "Post reported successfully. Thank you."
+        }
     },
     "share": {
         "title": "Send to...",
@@ -379,7 +389,8 @@
             "connected": "Connected! 🎉",
             "rejectConfirm": "Reject/Cancel this request?",
             "requestRemoved": "Request removed",
-            "failed": "Failed"
+            "failed": "Failed",
+            "failedToUnfollow": "Failed to unfollow"
         }
     },
     "chat": {
@@ -403,7 +414,12 @@
             "reactionFailed": "Failed to add reaction",
             "micDenied": "Microphone access denied 🚫",
             "blockedError": "Cannot send message (Blocked) 🚫",
-            "sendFailed": "Failed to send message"
+            "sendFailed": "Failed to send message",
+            "failedToEdit": "Failed to edit message",
+            "mediaOfflineError": "Media cannot be sent offline yet",
+            "newMessage": "New message from {{name}}",
+            "syncing": "Syncing pending messages...",
+            "synced": "Synced successfully"
         }
     },
     "chatInfo": {
@@ -555,7 +571,9 @@
         "chatLockedMsg": "Only admins can send messages at this time.",
         "toasts": {
             "messageNotLoaded": "Message not loaded here",
-            "notMember": "You are not a member of this group"
+            "notMember": "You are not a member of this group",
+            "failedToVote": "Failed to vote",
+            "failedToCreatePoll": "Failed to create poll"
         }
     },
     "groupRequests": {
@@ -630,5 +648,21 @@
         "globalTitle": "Something went wrong!",
         "globalMessage": "We encountered an unexpected issue. Please try refreshing the page.",
         "refreshButton": "Refresh Page"
+    },
+    "call": {
+        "toasts": {
+            "ended": "Call ended",
+            "micCameraDenied": "Camera/Mic permission denied",
+            "noVideoTrack": "No video track found",
+            "noAudioTrack": "No audio track found",
+            "connectionFailed": "Connection failed"
+        }
+    },
+    "ai": {
+        "errors": {
+            "dbError": "An error occurred while fetching messages from the database.",
+            "tooFewMessages": "Too few messages to summarize!",
+            "summaryFailed": "Summarization failed. Please check connection or API key."
+        }
     }
 }

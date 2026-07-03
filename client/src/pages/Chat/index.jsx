@@ -551,7 +551,7 @@ const Chat = () => {
                 await api.put(`/message/${msgId}`, { text: updatedText }, { headers: { Authorization: `Bearer ${token}` } });
             } catch (error) {
                 console.error("Edit failed");
-                toast.error("Failed to edit message");
+                toast.error(t("chat.toasts.failedToEdit"));
             }
             return;
         }
@@ -596,7 +596,7 @@ const Chat = () => {
 
         if (!navigator.onLine) {
             if (selectedImage || audioBlob) {
-                toast.error("Media cannot be sent offline yet");
+                toast.error(t("chat.toasts.mediaOfflineError"));
                 setMessages((prev) => prev.filter(msg => msg._id !== tempId));
                 return;
             }

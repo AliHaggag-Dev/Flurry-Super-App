@@ -141,7 +141,7 @@ const GroupChat = () => {
             }
         } catch (error) {
             console.error("AI Summary Error:", error);
-            toast.error(error.response?.data?.message || t("error.somethingWentWrong"));
+            toast.error(error.response?.data?.message ? t(error.response.data.message) : t("error.somethingWentWrong"));
         } finally {
             setIsSummarizing(false);
         }
@@ -285,9 +285,9 @@ const GroupChat = () => {
             await api.put("/group/poll/vote", { messageId, optionIndex }, { headers: { Authorization: `Bearer ${token}` } });
         } catch (error) {
             console.error("Vote failed");
-            toast.error("Failed to vote");
+            toast.error(t("groupChat.toasts.failedToVote"));
         }
-    }, [currentUser, getToken]);
+    }, [currentUser, getToken, t]);
 
     const handleCreatePoll = async (pollData) => {
         try {
@@ -302,7 +302,7 @@ const GroupChat = () => {
             }
         } catch (error) {
             console.error("Create poll failed", error);
-            toast.error("Failed to create poll");
+            toast.error(t("groupChat.toasts.failedToCreatePoll"));
         }
     };
 
@@ -512,7 +512,7 @@ const GroupChat = () => {
             try {
                 const token = await getToken();
                 await api.put(`/group/message/${msgId}`, { text: updatedText }, { headers: { Authorization: `Bearer ${token}` } });
-            } catch (error) { console.error("Edit failed", error); toast.error("Failed to edit message"); }
+            } catch (error) { console.error("Edit failed", error); toast.error(t("chat.toasts.failedToEdit")); }
             return;
         }
 
@@ -529,7 +529,7 @@ const GroupChat = () => {
         setNewMessage(""); setReplyTo(null); clearImage(); setShowEmoji(false); setAudioBlob(null); setAudioUrl(null); setRecordingDuration(0); setShowAttachments(false);
 
         if (!navigator.onLine) {
-            if (selectedImage || audioBlob) { toast.error("Media cannot be sent offline yet"); setMessages((prev) => prev.filter(msg => msg._id !== tempId)); return; }
+            if (selectedImage || audioBlob) { toast.error(t("chat.toasts.mediaOfflineError")); setMessages((prev) => prev.filter(msg => msg._id !== tempId)); return; }
             addToQueue("/group/send", { groupId: groupId, text: tempMessage.text, replyTo: replyTo?._id });
             return;
         }

@@ -63,13 +63,13 @@ export const summarizeChat = expressAsyncHandler(async (req, res) => {
         }
     } catch (dbError) {
         res.status(500);
-        throw new Error("حدث خطأ أثناء جلب الرسائل من قاعدة البيانات.");
+        throw new Error("ai.errors.dbError");
     }
 
     // 2. Validate Content Availability
     if (!messages || messages.length < 3) {
         res.status(400);
-        throw new Error("الرسايل قليلة أوي عشان تتلخص!");
+        throw new Error("ai.errors.tooFewMessages");
     }
 
     // 3. Prepare Context for AI
@@ -105,7 +105,7 @@ export const summarizeChat = expressAsyncHandler(async (req, res) => {
     } catch (error) {
         console.error("Gemini Summarization Error:", error);
         res.status(500);
-        throw new Error("فشل في التلخيص، تأكد من المفتاح أو الاتصال");
+        throw new Error("ai.errors.summaryFailed");
     }
 });
 

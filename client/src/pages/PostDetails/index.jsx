@@ -180,7 +180,7 @@ const PostDetails = () => {
                     headers: { Authorization: `Bearer ${await getToken()}` }
                 });
             } catch (err) {
-                if (err.name !== "AbortError") toast.error("Sharing failed");
+                if (err.name !== "AbortError") toast.error(t("post.toasts.sharingFailed"));
             }
         } else {
             handleCopyLink();
@@ -291,8 +291,8 @@ const PostDetails = () => {
     // --- Modal callbacks ---
     const handleReportSubmit = useCallback(() => {
         setShowReportModal(false);
-        toast.success("Post reported successfully. Thank you.");
-    }, []);
+        toast.success(t("post.toasts.reported"));
+    }, [t]);
 
     const handleEditPostSuccess = useCallback((updatedPost) => {
         setPost(prev => ({ ...prev, ...updatedPost }));
