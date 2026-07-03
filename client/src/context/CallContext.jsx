@@ -22,7 +22,7 @@ const CallContext = createContext();
 
 export const useCall = () => useContext(CallContext);
 
-export const CallProvider = ({ children }) => {
+export const CallProvider = ({ children }) => { 
     const { socket } = useSocketContext();
     const { userId } = useAuth();
     const { t } = useTranslation();
