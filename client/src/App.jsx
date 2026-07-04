@@ -83,6 +83,49 @@ const App = () => {
   // 1. Run Sync Engine Globally
   useOfflineSync();
 
+  // Axios Interceptors for Token Injections and 401 Auto-Recovery
+  useEffect(() => {
+    const reqInterceptor = api.interceptors.request.use(async (config) => {
+      if (!config.headers.Authorization) {
+        try {
+          const token = await getToken();
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+        } catch (e) {
+          console.error("Axios request interceptor error:", e);
+        }
+      }
+      return config;
+    });
+
+    const resInterceptor = api.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          try {
+            console.warn("Axios got 401. Fetching fresh Clerk token...");
+            const token = await getToken({ skipCache: true });
+            if (token) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return api(originalRequest);
+            }
+          } catch (e) {
+            console.error("Axios token auto-refresh retry failed:", e);
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      api.interceptors.request.eject(reqInterceptor);
+      api.interceptors.response.eject(resInterceptor);
+    };
+  }, [getToken]);
+
   // 2. Initialize Push Notifications
   useEffect(() => {
     const initializeNotifications = async () => {

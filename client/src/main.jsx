@@ -95,6 +95,12 @@ const ClerkWithTranslation = ({ children }) => {
     <ClerkProvider
       publishableKey={PUBLISHABLE_KEY}
       localization={i18n.language === 'ar' ? arSA : enUS}
+      signInUrl="/login"
+      signUpUrl="/login"
+      signInForceRedirectUrl="/"
+      signUpForceRedirectUrl="/"
+      afterSignInUrl="/"
+      afterSignUpUrl="/"
     >
       {children}
     </ClerkProvider>
