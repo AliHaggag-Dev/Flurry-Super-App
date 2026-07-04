@@ -25,7 +25,7 @@ export const MessageActionMenu = memo(({
             ${isMe ? "-start-11 md:-start-26 origin-right" : "-end-10 md:-end-18 origin-left"}
             ${showMobileMenu ? "opacity-100 visible scale-100" : "opacity-0 invisible scale-90"}
             md:opacity-0 md:invisible md:scale-90
-            md:group-hover/bubble:opacity-100 md:group-hover/bubble:visible md:group-hover/bubble:scale-100
+            md:group-hover/item:opacity-100 md:group-hover/item:visible md:group-hover/item:scale-100
         `}>
             {/* Reply Button */}
             <button onClick={onReply} className="p-1.5 hover:bg-primary/10 hover:text-primary rounded-full transition text-muted" title={t("Reply")}>
