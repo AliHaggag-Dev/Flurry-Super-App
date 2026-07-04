@@ -102,8 +102,8 @@ export const blockUser = createAsyncThunk(
     "connection/blockUser",
     async ({ targetUserId, token }, { rejectWithValue }) => {
         try {
-            const response = axiosInstance.post(`/connection/block`,
-                { blockId: targetUserId },
+            const response = axiosInstance.post(`/connection/block/${targetUserId}`,
+                {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
