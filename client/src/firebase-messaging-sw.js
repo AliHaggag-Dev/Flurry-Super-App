@@ -30,7 +30,7 @@ registerRoute(
     new NavigationRoute(async ({ request }) => {
 
         try {
-            const response = await fetch(request);
+            const response = await fetch(request.url, { cache: 'no-cache' });
 
             return response;
         } catch (error) {
