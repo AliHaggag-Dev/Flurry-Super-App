@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Trash2, Pause, Play, StopCircle, Send, Smile, ImageIcon, Mic, BarChart2, Loader2, Lock, Check } from "lucide-react";
+import { X, Trash2, Pause, Play, StopCircle, Send, Smile, ImageIcon, Mic, BarChart2, Loader2, Lock, Check, Plus } from "lucide-react";
 
 const EmojiPicker = lazy(() => import('emoji-picker-react'));
 

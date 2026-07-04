@@ -63,7 +63,7 @@ class GlobalErrorBoundary extends React.Component {
                         onClick={this.handleRefresh}
                         className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
                     >
-                        <RefreshCw size={20} className="animate-spin-slow" /> // Slow spin for effect
+                        <RefreshCw size={20} className="animate-spin-slow" />
                         {t('error.refreshButton', 'Refresh Page')}
                     </button>
 
