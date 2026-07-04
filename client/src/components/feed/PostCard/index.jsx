@@ -29,7 +29,7 @@ const PostCard = ({ post: initialPost, onDelete, priority, onReport }) => {
     // --- State ---
     const [post, setPost] = useState(initialPost);
     const [isLiked, setIsLiked] = useState(false);
-    const [likesCount, setLikesCount] = useState(post.likes_count || 0);
+    const [likesCount, setLikesCount] = useState(post.likes?.length || post.likes_count || 0);
     const [isSaved, setIsSaved] = useState(post.isSaved || false);
     const [hasReported, setHasReported] = useState(post.hasReported || false);
 
@@ -43,7 +43,7 @@ const PostCard = ({ post: initialPost, onDelete, priority, onReport }) => {
     // Sync state if initialPost updates externally
     useEffect(() => {
         setPost(initialPost);
-        setLikesCount(initialPost.likes_count || 0);
+        setLikesCount(initialPost.likes?.length || initialPost.likes_count || 0);
         setIsSaved(initialPost.isSaved || false);
         setHasReported(initialPost.hasReported || false);
     }, [initialPost]);
@@ -72,7 +72,7 @@ const PostCard = ({ post: initialPost, onDelete, priority, onReport }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (data.success) {
-                setLikesCount(data.likesCount);
+                setLikesCount(data.likes_count ?? data.likes?.length ?? 0);
             }
         } catch (error) {
             // Revert on error
@@ -218,8 +218,8 @@ const PostCard = ({ post: initialPost, onDelete, priority, onReport }) => {
             {/* Footer Interactions */}
             <PostFooter
                 likesCount={likesCount}
-                commentsCount={post.comments_count || 0}
-                sharesCount={post.shares_count || 0}
+                commentsCount={post.comments?.length || post.comments_count || 0}
+                sharesCount={post.shares?.length || post.shares_count || 0}
                 isLiked={isLiked}
                 showShareMenu={showShareMenu}
                 setShowShareMenu={setShowShareMenu}

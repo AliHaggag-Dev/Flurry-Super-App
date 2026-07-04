@@ -6,7 +6,7 @@ export const RecentHeader = memo(({ searchQuery, setSearchQuery, onNewChatClick,
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-black flex items-center gap-2 text-content tracking-tight select-none">
                 <MessageSquare className="text-primary w-5 h-5" />
-                {t("messages.messagesTitle")}
+                {t("messages.title")}
                 {totalUnreadCount > 0 && (
                     <span className="text-[10px] bg-primary text-white px-2 py-0.5 rounded-full font-bold shadow-md shadow-primary/20 animate-pulse">
                         {totalUnreadCount}
@@ -28,7 +28,7 @@ export const RecentHeader = memo(({ searchQuery, setSearchQuery, onNewChatClick,
                 <Search size={14} className="ms-3 text-muted group-focus-within:text-primary transition-colors" />
                 <input
                     type="text"
-                    placeholder={t("messages.searchChats")}
+                    placeholder={t("messages.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-transparent text-content px-3 py-2 text-xs focus:outline-none border-none outline-none ring-0 placeholder-muted/50"

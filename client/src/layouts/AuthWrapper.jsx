@@ -119,7 +119,7 @@ const AuthWrapper = () => {
 
     const handleRetry = () => {
         setIsRetrying(true);
-        setSyncTrigger(prev => prev + 1);
+        window.location.reload();
     };
 
     // --- Render ---
