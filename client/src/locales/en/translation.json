@@ -667,5 +667,9 @@
             "tooFewMessages": "Too few messages to summarize!",
             "summaryFailed": "Summarization failed. Please check connection or API key."
         }
+    },
+    "postDetails": {
+        "fetchFailed": "Failed to load post details.",
+        "notFound": "Post not found."
     }
 }

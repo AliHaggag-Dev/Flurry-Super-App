@@ -79,9 +79,10 @@ const PostDetails = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (data.success) {
-                setPost(data.data.post);
-                setComments(data.data.comments || []);
-                setIsSaved(data.data.isSaved);
+                const fetchedPost = data.post;
+                setPost(fetchedPost);
+                setComments(fetchedPost?.comments || []);
+                setIsSaved(fetchedPost?.saves?.includes(currentUser?._id) || false);
             } else {
                 toast.error(t("postDetails.notFound"));
                 navigate(-1);
@@ -93,7 +94,7 @@ const PostDetails = () => {
         } finally {
             setLoading(false);
         }
-    }, [id, getToken, navigate, t]);
+    }, [id, getToken, currentUser, navigate, t]);
 
     useEffect(() => {
         fetchPostDetails();
