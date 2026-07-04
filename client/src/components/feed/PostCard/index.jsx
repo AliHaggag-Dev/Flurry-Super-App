@@ -30,8 +30,8 @@ const PostCard = ({ post: initialPost, onDelete, priority, onReport }) => {
     const [post, setPost] = useState(initialPost);
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(post.likes?.length || post.likes_count || 0);
-    const [isSaved, setIsSaved] = useState(post.isSaved || false);
-    const [hasReported, setHasReported] = useState(post.hasReported || false);
+    const [isSaved, setIsSaved] = useState(post.saves?.includes(currentUser?._id) || post.isSaved || false);
+    const [hasReported, setHasReported] = useState(post.reports?.includes(currentUser?._id) || post.hasReported || false);
 
     // Option Menus & Share
     const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -44,16 +44,24 @@ const PostCard = ({ post: initialPost, onDelete, priority, onReport }) => {
     useEffect(() => {
         setPost(initialPost);
         setLikesCount(initialPost.likes?.length || initialPost.likes_count || 0);
-        setIsSaved(initialPost.isSaved || false);
-        setHasReported(initialPost.hasReported || false);
-    }, [initialPost]);
+        setIsSaved(initialPost.saves?.includes(currentUser?._id) || initialPost.isSaved || false);
+        setHasReported(initialPost.reports?.includes(currentUser?._id) || initialPost.hasReported || false);
+    }, [initialPost, currentUser]);
 
-    // Check if liked by current user
+    // Check if liked, saved, or reported by current user
     useEffect(() => {
-        if (currentUser && post.likes) {
-            setIsLiked(post.likes.includes(currentUser._id));
+        if (currentUser) {
+            if (post.likes) {
+                setIsLiked(post.likes.includes(currentUser._id));
+            }
+            if (post.saves) {
+                setIsSaved(post.saves.includes(currentUser._id));
+            }
+            if (post.reports) {
+                setHasReported(post.reports.includes(currentUser._id));
+            }
         }
-    }, [currentUser, post.likes]);
+    }, [currentUser, post.likes, post.saves, post.reports]);
 
     // --- Interactions (Memoized) ---
 

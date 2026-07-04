@@ -3,7 +3,7 @@ import { ArrowLeft, MoreHorizontal, Link2, Bookmark, PenLine, Trash2 } from "luc
 import { AnimatePresence, motion } from "framer-motion";
 
 const PostHeader = memo(({
-    navigate, post, isOwner, isSaved,
+    navigate, post, isOwner, isSaved, hasReported,
     showOptionsMenu, setShowOptionsMenu,
     onCopyLink, onSave, onDelete, onEdit, onReport, t
 }) => (
@@ -61,9 +61,12 @@ const PostHeader = memo(({
                                 </>
                             ) : null}
                             {!isOwner && (
-                                <button onClick={onReport} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
-                                    <ArrowLeft className="rotate-180 hidden" /> {/* Placeholder/Icon Fix */}
-                                    <span>Report</span> {/* Fallback/Icon needed based on import */}
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); if (!hasReported) onReport(); }}
+                                    disabled={hasReported}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${hasReported ? "text-muted cursor-not-allowed bg-main" : "text-amber-500 hover:bg-amber-500/10"}`}
+                                >
+                                    <span>{hasReported ? t("post.reported") : t("post.report")}</span>
                                 </button>
                             )}
                         </motion.div>

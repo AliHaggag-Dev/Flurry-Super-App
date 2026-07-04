@@ -57,6 +57,7 @@ const PostDetails = () => {
     const [submitting, setSubmitting] = useState(false);
     const [commentText, setCommentText] = useState("");
     const [isSaved, setIsSaved] = useState(false);
+    const [hasReported, setHasReported] = useState(false);
 
     // Modals & Menus
     const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -83,6 +84,7 @@ const PostDetails = () => {
                 setPost(fetchedPost);
                 setComments(fetchedPost?.comments || []);
                 setIsSaved(fetchedPost?.saves?.includes(currentUser?._id) || false);
+                setHasReported(fetchedPost?.reports?.includes(currentUser?._id) || false);
             } else {
                 toast.error(t("postDetails.notFound"));
                 navigate(-1);
@@ -291,6 +293,7 @@ const PostDetails = () => {
 
     // --- Modal callbacks ---
     const handleReportSubmit = useCallback(() => {
+        setHasReported(true);
         setShowReportModal(false);
         toast.success(t("post.toasts.reported"));
     }, [t]);
@@ -331,6 +334,7 @@ const PostDetails = () => {
                 post={post}
                 isOwner={isOwner}
                 isSaved={isSaved}
+                hasReported={hasReported}
                 showOptionsMenu={showOptionsMenu}
                 setShowOptionsMenu={setShowOptionsMenu}
                 onCopyLink={handleCopyLink}

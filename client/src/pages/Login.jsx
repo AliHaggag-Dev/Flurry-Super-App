@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { SignIn } from "@clerk/clerk-react";
+import { SignIn, useUser } from "@clerk/clerk-react";
+import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles, MessageCircle, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next"; // 🟢 Import translation hook
@@ -35,6 +36,11 @@ const FADE_RIGHT_VARIANTS = {
  */
 const Login = () => {
     const { t } = useTranslation(); // 🟢 Hook initialization
+    const { user, isLoaded } = useUser();
+
+    if (isLoaded && user) {
+        return <Navigate to="/" replace />;
+    }
 
     // Memoize Clerk appearance to prevent unnecessary re-calculations on render
     const clerkAppearance = useMemo(
