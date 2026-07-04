@@ -647,7 +647,10 @@
     "error": {
         "globalTitle": "Something went wrong!",
         "globalMessage": "We encountered an unexpected issue. Please try refreshing the page.",
-        "refreshButton": "Refresh Page"
+        "refreshButton": "Refresh Page",
+        "connectionTitle": "Connection Failed",
+        "connectionMessage": "We couldn't connect to the server. The database might be waking up. Please try again.",
+        "retryButton": "Try Again"
     },
     "call": {
         "toasts": {
