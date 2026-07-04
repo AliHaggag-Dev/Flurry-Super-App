@@ -199,8 +199,7 @@ const PostDetails = () => {
 
         try {
             const token = await getToken();
-            const { data } = await api.post(`/comment/add`, {
-                postId: id,
+            const { data } = await api.post(`/post/comment/${id}`, {
                 text: text.trim(),
                 parentId
             }, {
@@ -243,7 +242,7 @@ const PostDetails = () => {
 
         try {
             const token = await getToken();
-            await api.put(`/comment/like/${commentId}`, {}, {
+            await api.post(`/post/comment/like/${commentId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
         } catch (error) {
@@ -263,7 +262,7 @@ const PostDetails = () => {
 
         try {
             const token = await getToken();
-            await api.delete(`/comment/${commentId}`, {
+            await api.delete(`/post/comment/${commentId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(t("comment.toasts.deleted"));
@@ -283,7 +282,7 @@ const PostDetails = () => {
 
         try {
             const token = await getToken();
-            await api.put(`/comment/edit/${commentId}`, { text: newText.trim() }, {
+            await api.put(`/post/comment/${commentId}`, { text: newText.trim() }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
         } catch (error) {
