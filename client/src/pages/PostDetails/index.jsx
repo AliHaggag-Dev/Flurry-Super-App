@@ -103,7 +103,8 @@ const PostDetails = () => {
     }, [fetchPostDetails]);
 
     // --- Auto-resize input textarea ---
-    const handleTextareaInput = useCallback(() => {
+    const handleTextareaInput = useCallback((e) => {
+        setCommentText(e.target.value);
         if (textareaRef.current) {
             textareaRef.current.style.height = "auto";
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;

@@ -151,7 +151,17 @@
             "deleteSuccess": "Post deleted successfully",
             "deleteError": "Failed to delete post",
             "sharingFailed": "Sharing failed",
-            "reported": "Post reported successfully. Thank you."
+            "reported": "Post reported successfully. Thank you.",
+            "deleted": "Post deleted successfully"
+        }
+    },
+    "comment": {
+        "toasts": {
+            "added": "Comment added successfully! 🚀",
+            "failed": "Failed to add comment.",
+            "deleteConfirm": "Are you sure you want to delete this comment?",
+            "deleted": "Comment deleted successfully.",
+            "deleteFailed": "Failed to delete comment."
         }
     },
     "share": {
@@ -670,6 +680,11 @@
     },
     "postDetails": {
         "fetchFailed": "Failed to load post details.",
-        "notFound": "Post not found."
+        "notFound": "Post not found.",
+        "title": "Post Details",
+        "by": "By",
+        "discussion": "Discussion ({{count}})",
+        "noComments": "No comments yet. Start the conversation!",
+        "addComment": "Add a comment..."
     }
 }
