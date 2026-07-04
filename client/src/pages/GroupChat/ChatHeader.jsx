@@ -13,10 +13,10 @@ const ChatHeader = React.memo(({ groupInfo, t, navigate, handleSummarizeChat, is
                 onClick={handleSummarizeChat}
                 disabled={isSummarizing}
                 className={`p-2 rounded-full transition relative group ${isSummarizing ? "animate-pulse" : "hover:bg-primary/10 text-primary"}`}
-                title="Summarize Chat"
+                title={t("groupChat.aiSummary.tooltip")}
             >
                 {isSummarizing ? <Loader2 size={22} className="animate-spin" /> : <Sparkles size={22} />}
-                <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">Summarize</span>
+                <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">{t("groupChat.aiSummary.tooltip")}</span>
             </button>
             <button onClick={(e) => { e.stopPropagation(); setShowChatInfo(true); }} className="p-2 rounded-full transition hover:bg-main text-muted hover:text-content"><MoreVertical size={22} /></button>
         </div>

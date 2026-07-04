@@ -207,7 +207,9 @@
         "sharedPost": "📌 Shared Post",
         "noMessages": "No messages",
         "blockedByMe": "You blocked them",
-        "userUnavailable": "User unavailable"
+        "userUnavailable": "User unavailable",
+        "deletedMessage": "This message was deleted",
+        "edited": "edited"
     },
     "footer": {
         "aboutLegal": "About & Legal",
@@ -686,5 +688,25 @@
         "discussion": "Discussion ({{count}})",
         "noComments": "No comments yet. Start the conversation!",
         "addComment": "Add a comment..."
+    },
+    "groupChat": {
+        "pendingTitle": "Join Request Pending",
+        "pendingDesc": "Your request to join this community is awaiting approval from the group owner/administrator.",
+        "goBack": "Explore Other Communities",
+        "isTyping": "is typing...",
+        "chatLockedMsg": "Only administrators can send messages at this time.",
+        "membersActive": "{{count}} members active",
+        "toasts": {
+            "messageNotLoaded": "Message is not loaded in current viewport.",
+            "failedToVote": "Failed to register vote. Please try again.",
+            "failedToCreatePoll": "Failed to create poll. Please try again.",
+            "notMember": "You must be a member to access this chat."
+        },
+        "aiSummary": {
+            "title": "AI Summary",
+            "noSummary": "No summary available.",
+            "close": "Close",
+            "tooltip": "Summarize Chat"
+        }
     }
 }
