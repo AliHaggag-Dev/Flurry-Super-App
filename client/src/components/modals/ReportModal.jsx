@@ -29,13 +29,17 @@ const REPORT_REASONS_KEYS = [
     "other"
 ];
 
-const ReportModal = ({ postId, onClose, onSuccess }) => {
+const ReportModal = ({ postId, targetId, onClose, onSuccess, onSubmit }) => {
     const { getToken } = useAuth();
     const { t } = useTranslation(); // 🟢
+    const activePostId = postId || targetId;
+    const handleSuccess = onSuccess || onSubmit;
 
     const handleReport = async (reason) => {
         // Optimistic UI: Close and show success immediately
-        onSuccess();
+        if (typeof handleSuccess === "function") {
+            handleSuccess();
+        }
         onClose();
         toast.success(t("report.success")); // 🟢
 
@@ -43,7 +47,7 @@ const ReportModal = ({ postId, onClose, onSuccess }) => {
             const token = await getToken();
             // Send the raw reason key or translated string (usually backend expects consistent keys)
             // Here sending the key for consistency
-            await api.post(`/post/report/${postId}`, { reason }, {
+            await api.post(`/post/report/${activePostId}`, { reason }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
         } catch (error) {
