@@ -38,6 +38,16 @@
         }
       }
     });
+
+    window.addEventListener('vite:preloadError', function(event) {
+      console.warn('Detected Vite preload error. Reloading...', event);
+      const lastReload = sessionStorage.getItem('last-chunk-reload');
+      const now = Date.now();
+      if (!lastReload || (now - parseInt(lastReload, 10) > 10000)) {
+        sessionStorage.setItem('last-chunk-reload', now);
+        window.location.reload(true);
+      }
+    });
   </script>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
