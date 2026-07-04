@@ -199,7 +199,7 @@ const MessageItem = ({
                                 )}
 
                                 {msg.message_type === "poll" && msg.poll && (
-                                    <PollMessage poll={msg.poll} messageId={msg._id} currentUserId={userId} onVote={onVote} isMe={isMe} />
+                                    <PollMessage message={msg} currentUserId={userId} onVote={onVote} t={t} />
                                 )}
 
                                 {msg.text && (
