@@ -69,13 +69,13 @@ const ShareModal = ({ isOpen, onClose, post, onSuccess }) => {
         setSending(true);
         try {
             const token = await getToken();
-            const postLink = `${window.location.origin}/post/${post._id}`;
-            const messageText = `${t("share.checkOutMsg")} ${post.user?.full_name}:\n${postLink}`; // 🟢 Translated msg
+            const postLink = `${window.location.origin}/post/${post?._id || ""}`;
+            const messageText = `${t("share.checkOutMsg")} ${post?.user?.full_name || ""}:\n${postLink}`; // 🟢 Translated msg
 
             await api.post("/message/send", {
                 receiverId: selectedChatId,
                 text: messageText,
-                sharedPostId: post._id
+                sharedPostId: post?._id
             }, { headers: { Authorization: `Bearer ${token}` } });
 
             toast.success(t("share.success")); // 🟢

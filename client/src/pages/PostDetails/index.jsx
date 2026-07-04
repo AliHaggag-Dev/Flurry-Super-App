@@ -406,7 +406,7 @@ const PostDetails = () => {
             />
 
             {/* Modals & Overlays */}
-            <ShareModal isOpen={showInternalShareModal} onClose={() => setShowInternalShareModal(false)} postId={id} />
+            <ShareModal isOpen={showInternalShareModal} onClose={() => setShowInternalShareModal(false)} post={post} />
             {isOwner && <EditPostModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} post={post} onUpdate={handleEditPostSuccess} />}
             {showReportModal && (
                 <ReportModal isOpen={showReportModal} onClose={() => setShowReportModal(false)} targetType="post" targetId={id} onSubmit={handleReportSubmit} />
