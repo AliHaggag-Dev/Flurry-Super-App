@@ -5,6 +5,41 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Auto-Recovery on Deployments (Failed Chunks/MIME mismatches) -->
+  <script>
+    window.addEventListener('error', function(e) {
+      if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+        const url = e.target.src || e.target.href;
+        if (url && (url.includes('/assets/') || url.includes('.js') || url.includes('.css'))) {
+          console.warn('Detected failed asset load. Reloading client to update code...', url);
+          const lastReload = sessionStorage.getItem('last-chunk-reload');
+          const now = Date.now();
+          if (!lastReload || (now - parseInt(lastReload, 10) > 10000)) {
+            sessionStorage.setItem('last-chunk-reload', now);
+            window.location.reload(true);
+          }
+        }
+      }
+    }, true);
+
+    window.addEventListener('unhandledrejection', function(e) {
+      const reason = e.reason && e.reason.message;
+      if (reason && (
+        reason.includes('Failed to fetch dynamically imported module') || 
+        reason.includes('error loading dynamically imported module') ||
+        reason.includes('ChunkLoadError')
+      )) {
+        console.warn('Detected dynamic module load failure. Reloading...', reason);
+        const lastReload = sessionStorage.getItem('last-chunk-reload');
+        const now = Date.now();
+        if (!lastReload || (now - parseInt(lastReload, 10) > 10000)) {
+          sessionStorage.setItem('last-chunk-reload', now);
+          window.location.reload(true);
+        }
+      }
+    });
+  </script>
+
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />

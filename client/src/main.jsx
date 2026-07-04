@@ -66,13 +66,14 @@ import './index.css';
 
 // --- PWA Service Worker Registration ---
 const updateSW = registerSW({
+  immediate: true,
   onNeedRefresh() {
-    if (confirm("New content available. Reload?")) {
-      if (updateSW && typeof updateSW === 'function') {
-        updateSW(true).then(() => {
-          window.location.reload();
-        });
-      }
+    if (updateSW && typeof updateSW === 'function') {
+      updateSW(true).then(() => {
+        window.location.reload();
+      });
+    } else {
+      window.location.reload();
     }
   },
   onOfflineReady() {
