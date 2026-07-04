@@ -10,7 +10,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Pause } from "lucide-react";
 
-const VoiceMessage = ({ src, isMe }) => {
+const VoiceMessage = ({ src, mediaUrl, isMe }) => {
+    const audioSrc = src || mediaUrl;
+
     // --- State ---
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -90,7 +92,7 @@ const VoiceMessage = ({ src, isMe }) => {
 
             <audio
                 ref={audioRef}
-                src={src}
+                src={audioSrc}
                 preload="metadata"
                 onEnded={handleAudioEnded}
                 onLoadedMetadata={() => setDuration(audioRef.current.duration)}

@@ -2,21 +2,34 @@ import { useEffect } from 'react';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@clerk/clerk-react';
 
 const useOfflineSync = () => {
     const { t } = useTranslation();
+    const { getToken } = useAuth();
 
     const processQueue = async () => {
         const queue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
         if (queue.length === 0) return;
         if (!navigator.onLine) return;
 
+        let token = null;
+        try {
+            token = await getToken();
+        } catch (e) {
+            console.error("Failed to get Clerk token for offline sync:", e);
+        }
+
         const toastId = toast.loading(t("chat.toasts.syncing"));
         const newQueue = [];
 
         for (const msg of queue) {
             try {
-                await api.post(msg.endpoint, msg.data);
+                const config = {};
+                if (token) {
+                    config.headers = { Authorization: `Bearer ${token}` };
+                }
+                await api.post(msg.endpoint, msg.data, config);
             } catch (error) {
                 console.error("فشل إرسال رسالة من الطابور", error);
                 if (error.code === "ERR_NETWORK" || error.message === "Network Error") {

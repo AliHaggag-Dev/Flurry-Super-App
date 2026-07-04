@@ -16,7 +16,7 @@ import { Loader2, Image as ImageIcon } from "lucide-react";
 // API
 import api from "../../lib/axios";
 
-const SharedPostCard = ({ postId }) => {
+const SharedPostCard = ({ postId, post: propPost }) => {
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
     const { getToken } = useAuth();
@@ -24,10 +24,22 @@ const SharedPostCard = ({ postId }) => {
     useEffect(() => {
         let isMounted = true; // Prevent state update on unmount
 
+        if (propPost && typeof propPost === 'object' && propPost._id) {
+            setPost(propPost);
+            setLoading(false);
+            return;
+        }
+
+        const activePostId = postId || propPost;
+        if (!activePostId) {
+            setLoading(false);
+            return;
+        }
+
         const fetchPostPreview = async () => {
             try {
                 const token = await getToken();
-                const { data } = await api.get(`/post/${postId}`, {
+                const { data } = await api.get(`/post/${activePostId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (isMounted && data.success) {
@@ -40,10 +52,10 @@ const SharedPostCard = ({ postId }) => {
             }
         };
 
-        if (postId) fetchPostPreview();
+        fetchPostPreview();
 
         return () => { isMounted = false; };
-    }, [postId, getToken]);
+    }, [postId, propPost, getToken]);
 
     // Loading State
     if (loading) return (
