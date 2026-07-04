@@ -160,8 +160,7 @@ const PostCard = ({ post: initialPost, onDelete, priority, onReport }) => {
         setHasReported(true);
         setShowReportModal(false);
         if (onReport) onReport(post._id);
-        toast.success(t("post.reportedSuccess"));
-    }, [post._id, onReport, t]);
+    }, [post._id, onReport]);
 
     const handleEditPostSuccess = useCallback((updatedPost) => {
         setPost(prev => ({ ...prev, ...updatedPost }));

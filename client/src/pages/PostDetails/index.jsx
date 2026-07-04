@@ -295,8 +295,7 @@ const PostDetails = () => {
     const handleReportSubmit = useCallback(() => {
         setHasReported(true);
         setShowReportModal(false);
-        toast.success(t("post.toasts.reported"));
-    }, [t]);
+    }, []);
 
     const handleEditPostSuccess = useCallback((updatedPost) => {
         setPost(prev => ({ ...prev, ...updatedPost }));
@@ -409,7 +408,9 @@ const PostDetails = () => {
             {/* Modals & Overlays */}
             <ShareModal isOpen={showInternalShareModal} onClose={() => setShowInternalShareModal(false)} postId={id} />
             {isOwner && <EditPostModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} post={post} onUpdate={handleEditPostSuccess} />}
-            <ReportModal isOpen={showReportModal} onClose={() => setShowReportModal(false)} targetType="post" targetId={id} onSubmit={handleReportSubmit} />
+            {showReportModal && (
+                <ReportModal isOpen={showReportModal} onClose={() => setShowReportModal(false)} targetType="post" targetId={id} onSubmit={handleReportSubmit} />
+            )}
 
             {/* Full Screen Image Lightbox */}
             <ImageGallery images={post.image_urls} initialIndex={selectedImageIndex} onClose={handleCloseImage} />
